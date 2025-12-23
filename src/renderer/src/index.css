@@ -1,0 +1,214 @@
+@import "tailwindcss";
+
+/* CSS Variables for theme (shadcn/ui compatible) */
+:root {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(240 10% 3.9%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(240 10% 3.9%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(240 10% 3.9%);
+  --primary: hsl(240 5.9% 10%);
+  --primary-foreground: hsl(0 0% 98%);
+  --secondary: hsl(240 4.8% 95.9%);
+  --secondary-foreground: hsl(240 5.9% 10%);
+  --muted: hsl(240 4.8% 95.9%);
+  --muted-foreground: hsl(240 3.8% 46.1%);
+  --accent: hsl(240 4.8% 95.9%);
+  --accent-foreground: hsl(240 5.9% 10%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --border: hsl(240 5.9% 90%);
+  --input: hsl(240 5.9% 90%);
+  --ring: hsl(240 5.9% 10%);
+  --radius: 0.5rem;
+
+  /* Custom app colors */
+  --score-excellent: hsl(142.1 76.2% 36.3%);
+  --score-good: hsl(47.9 95.8% 53.1%);
+  --score-average: hsl(24.6 95% 53.1%);
+  --score-poor: hsl(0 84.2% 60.2%);
+}
+
+.dark {
+  --background: hsl(240 10% 3.9%);
+  --foreground: hsl(0 0% 98%);
+  --card: hsl(240 10% 3.9%);
+  --card-foreground: hsl(0 0% 98%);
+  --popover: hsl(240 10% 3.9%);
+  --popover-foreground: hsl(0 0% 98%);
+  --primary: hsl(0 0% 98%);
+  --primary-foreground: hsl(240 5.9% 10%);
+  --secondary: hsl(240 3.7% 15.9%);
+  --secondary-foreground: hsl(0 0% 98%);
+  --muted: hsl(240 3.7% 15.9%);
+  --muted-foreground: hsl(240 5% 64.9%);
+  --accent: hsl(240 3.7% 15.9%);
+  --accent-foreground: hsl(0 0% 98%);
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --border: hsl(240 3.7% 15.9%);
+  --input: hsl(240 3.7% 15.9%);
+  --ring: hsl(240 4.9% 83.9%);
+}
+
+* {
+  border-color: var(--border);
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Utility classes using CSS variables */
+.bg-background {
+  background-color: var(--background);
+}
+
+.bg-foreground {
+  background-color: var(--foreground);
+}
+
+.bg-card {
+  background-color: var(--card);
+}
+
+.bg-popover {
+  background-color: var(--popover);
+}
+
+.bg-primary {
+  background-color: var(--primary);
+}
+
+.bg-secondary {
+  background-color: var(--secondary);
+}
+
+.bg-muted {
+  background-color: var(--muted);
+}
+
+.bg-accent {
+  background-color: var(--accent);
+}
+
+.bg-destructive {
+  background-color: var(--destructive);
+}
+
+.text-foreground {
+  color: var(--foreground);
+}
+
+.text-card-foreground {
+  color: var(--card-foreground);
+}
+
+.text-popover-foreground {
+  color: var(--popover-foreground);
+}
+
+.text-primary {
+  color: var(--primary);
+}
+
+.text-primary-foreground {
+  color: var(--primary-foreground);
+}
+
+.text-secondary-foreground {
+  color: var(--secondary-foreground);
+}
+
+.text-muted-foreground {
+  color: var(--muted-foreground);
+}
+
+.text-accent-foreground {
+  color: var(--accent-foreground);
+}
+
+.text-destructive {
+  color: var(--destructive);
+}
+
+.text-destructive-foreground {
+  color: var(--destructive-foreground);
+}
+
+.border-border {
+  border-color: var(--border);
+}
+
+.border-input {
+  border-color: var(--input);
+}
+
+/* Prevent text selection on UI elements */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  opacity: 0.3;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  opacity: 0.5;
+}
+
+/* Score colors */
+.score-excellent {
+  color: var(--score-excellent);
+}
+
+.score-good {
+  color: var(--score-good);
+}
+
+.score-average {
+  color: var(--score-average);
+}
+
+.score-poor {
+  color: var(--score-poor);
+}
+
+/* Keyword chip drag styles */
+.keyword-dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.keyword-drag-overlay {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}

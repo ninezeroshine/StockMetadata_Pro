@@ -1,0 +1,38 @@
+{
+    "$schema": "https://json.schemastore.org/electron-builder.json",
+    "appId": "com.stockmetadata.pro",
+    "productName": "StockMetadata Pro",
+    "directories": {
+        "output": "dist",
+        "buildResources": "resources"
+    },
+    "files": [
+        "out/**/*"
+    ],
+    "win": {
+        "target": [
+            "nsis"
+        ],
+        "icon": "resources/icon.ico"
+    },
+    "mac": {
+        "target": [
+            "dmg"
+        ],
+        "icon": "resources/icon.icns",
+        "category": "public.app-category.photography"
+    },
+    "nsis": {
+        "oneClick": false,
+        "allowToChangeInstallationDirectory": true
+    },
+    "extraResources": [
+        {
+            "from": "node_modules/exiftool-vendored.exe/bin",
+            "to": "exiftool",
+            "filter": [
+                "**/*"
+            ]
+        }
+    ]
+}
