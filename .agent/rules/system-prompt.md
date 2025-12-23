@@ -14,22 +14,26 @@ trigger: always_on
 **Core Features:**
 - Image ingestion (JPG, JPEG, PNG) with extensible format support
 - AI-powered metadata generation via OpenRouter (Gemini Flash)
+- Batch processing with Generate All button
 - Manual editing with Drag & Drop keyword reordering
 - IPTC/XMP metadata writing via ExifTool
+- Auto-loading thumbnails with concurrency control
 
 **Tech Stack (MANDATORY):**
 | Category | Technology | Notes |
 |----------|------------|-------|
-| Build | `electron-vite` | v2.0+, specialized Electron tooling |
-| Core | Electron | v28+, with context isolation |
+| Build | `electron-vite` | v2.3+, specialized Electron tooling |
+| Core | Electron | v33+, with context isolation |
 | Frontend | React 18+ | TypeScript 5+ |
-| UI | TailwindCSS v4 + shadcn/ui | New `@import` syntax |
+| UI | TailwindCSS v4 | New `@import "tailwindcss"` syntax |
 | State | Zustand v5+ | Minimal boilerplate |
-| Backend | Node.js 20 LTS | Main Process |
+| Backend | Node.js 20+ LTS | Main Process |
 | Images | `sharp` | Compression/conversion |
 | Metadata | `exiftool-vendored` | IPTC/XMP handling |
 | AI | `openai` npm | Configured for OpenRouter |
-| Storage | `electron-store` | Encrypted settings |
+| Storage | `electron-store` | v8 (CommonJS), encrypted via safeStorage |
+| DnD | `@dnd-kit` | Keyword reordering |
+| Testing | `vitest` + `jsdom` | Unit tests |
 
 ---
 
@@ -76,19 +80,31 @@ trigger: always_on
 - Describe mood, atmosphere, or use case
 
 ### 4.3 Keywords Requirements
-- Count: 45-50 keywords exactly
+- Count: 40-50 keywords
 - Format: lowercase, single words or 2-word phrases
 - Sorting: by visual relevance (most prominent first)
 - **PROHIBITED:** Duplicates, plural forms, brand names
 
 ### 4.4 Blacklist Words (NEVER USE)
 ```
+# Subjective words
 beautiful, gorgeous, stunning, amazing, awesome, perfect, best, nice, good, great,
-4k, 8k, hd, high quality, professional, stock photo, royalty free,
-wallpaper, background image, copy space, negative space,
-iPhone, Samsung, Apple, Nike, Adidas, Google, Microsoft, Adobe,
-Canon, Nikon, Sony, Mercedes, BMW, Tesla, Coca-Cola, Pepsi,
-copyright, watermark, logo, trademark
+wonderful, lovely, pretty, cute, fantastic, incredible, magnificent, superb, excellent
+
+# Technical spam
+4k, 8k, hd, uhd, high quality, high resolution, professional, stock photo,
+royalty free, royalty-free, stock image, stock photography, commercial use
+
+# Meaningless for search
+wallpaper, background image, copy space, negative space, horizontal, vertical,
+square, landscape, portrait, image, photo, picture, photograph, shot, scene
+
+# Brands (never use any brand names)
+iPhone, Samsung, Apple, Google, Microsoft, Adobe, Nike, Adidas, Canon, Nikon,
+Sony, Mercedes, BMW, Tesla, Coca-Cola, Pepsi, etc.
+
+# Legal terms
+copyright, watermark, logo, trademark, registered
 ```
 
 ---
@@ -100,34 +116,78 @@ copyright, watermark, logo, trademark
 Main Process (Node.js):
 ├── File system operations (ExifTool, sharp)
 ├── OpenRouter API calls
-├── Settings persistence (electron-store)
+├── Settings persistence (electron-store + safeStorage)
 └── Window management
 
 Preload Script (Isolated):
 ├── Context bridge API exposure
+├── webUtils.getPathForFile for drag & drop
 └── Secure IPC channel definitions
 
 Renderer Process (React):
 ├── UI rendering only
 ├── No direct Node.js access
-└── IPC through exposed APIs
+└── IPC through window.api
 ```
 
 ### 5.2 IPC Security Pattern
 ```typescript
 // preload/index.ts - ALWAYS use contextBridge
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
+
 contextBridge.exposeInMainWorld('api', {
+  // Settings
   getSettings: () => ipcRenderer.invoke('settings:get'),
-  setSettings: (key: string, value: any) => ipcRenderer.invoke('settings:set', key, value),
-  generateMetadata: (imagePath: string) => ipcRenderer.invoke('metadata:generate', imagePath),
-  writeMetadata: (params: WriteMetadataParams) => ipcRenderer.invoke('metadata:write', params),
+  setSetting: (key, value) => ipcRenderer.invoke('settings:set', key, value),
+  
+  // Files
+  selectFiles: () => ipcRenderer.invoke('files:select'),
+  readImagePreview: (filePath) => ipcRenderer.invoke('files:preview', filePath),
+  getPathForFile: (file) => webUtils.getPathForFile(file), // CRITICAL for drag & drop
+  
+  // Metadata
+  generateMetadata: (imagePath) => ipcRenderer.invoke('metadata:generate', imagePath),
+  writeMetadata: (params) => ipcRenderer.invoke('metadata:write', params),
 });
 ```
 
-### 5.3 Library Discipline (CRITICAL)
-- **shadcn/ui:** Use provided components (Dialog, Button, Input, etc.). Do NOT recreate from scratch.
-- **Zustand:** Simple stores, no boilerplate. Use selectors for optimization.
-- **TailwindCSS v4:** Use `@import "tailwindcss";` syntax, not `@tailwind` directives.
+### 5.3 Critical Learnings
+
+#### electron-store v10+ is ESM-only
+```bash
+# Use v8 for CommonJS compatibility with electron-vite
+npm install electron-store@8
+```
+
+#### CSP for images (index.html)
+```html
+<meta http-equiv="Content-Security-Policy" 
+  content="default-src 'self'; 
+           script-src 'self'; 
+           style-src 'self' 'unsafe-inline'; 
+           img-src 'self' data: blob:;" />
+```
+
+#### Drag & Drop file paths
+```typescript
+// File.path does NOT work in production
+// MUST use webUtils.getPathForFile from preload
+const filePath = window.api.getPathForFile(file)
+```
+
+#### sandbox: false for File.path access
+```typescript
+webPreferences: {
+  preload: join(__dirname, '../preload/index.js'),
+  sandbox: false,  // Required for webUtils.getPathForFile
+  contextIsolation: true,
+  nodeIntegration: false
+}
+```
+
+### 5.4 TailwindCSS v4 Issues
+- CSS variables need `hsl()` wrapper OR use inline styles for reliability
+- Use inline styles for modals/overlays to avoid TailwindCSS class resolution issues
 
 ---
 
@@ -138,97 +198,198 @@ contextBridge.exposeInMainWorld('api', {
 interface FileProcessor {
   readonly supportedExtensions: string[];
   canProcess(filePath: string): boolean;
-  extractPreview(filePath: string): Promise<Buffer>;
   readMetadata(filePath: string): Promise<Metadata>;
   writeMetadata(filePath: string, metadata: Metadata): Promise<void>;
 }
 
-// Easy extension for new formats:
-// new TiffProcessor(), new EpsProcessor(), new WebpProcessor()
+// Implementations:
+// - JpegProcessor (IPTC + XMP)
+// - PngProcessor (XMP only)
+// Future: TiffProcessor, WebpProcessor
 ```
 
 ### 6.2 Format-Specific Metadata
 | Format | IPTC | XMP | Notes |
 |--------|------|-----|-------|
-| JPEG | ✅ | ✅ | Full support |
-| PNG | ❌ | ✅ | XMP only (PNG tEXt chunks) |
-| TIFF | ✅ | ✅ | Full support (v2.0) |
-| EPS | ❌ | ✅ | XMP sidecar file (v2.0) |
+| JPEG | ✅ | ✅ | Full support, use both |
+| PNG | ❌ | ✅ | XMP only |
+| TIFF | ✅ | ✅ | Future |
+| WebP | ❌ | ✅ | Future |
 
----
-
-## 7. ERROR HANDLING STANDARDS
-
-### 7.1 Error Categories
-| Code | Type | User Action |
-|------|------|-------------|
-| `API_401` | Auth | Modal: "Check API key in settings" |
-| `API_429` | Rate Limit | Countdown + auto-retry |
-| `API_500` | Server | 2 retries, then skip |
-| `API_TIMEOUT` | Timeout | 1 retry, then mark error |
-| `FILE_READ` | File | Toast: "File corrupted or inaccessible" |
-| `FILE_WRITE` | File | Toast: "Write error. Check permissions" |
-| `FILE_FORMAT` | Validation | Toast: "Supported: JPG, JPEG, PNG" |
-| `FILE_SIZE` | Validation | Toast: "Max size: 50MB" |
-| `JSON_PARSE` | Parse | Retry with simpler prompt |
-
-### 7.2 Retry Strategy
+### 6.3 ExifTool WriteTags
 ```typescript
-const backoff = (attempt: number) => Math.min(1000 * 2 ** attempt, 30000);
-// Attempt 1: 2s, Attempt 2: 4s, Attempt 3: 8s, Max: 30s
+// Use standard WriteTags fields, not custom IPTC: prefixes
+const tags: WriteTags = {
+  Title: metadata.title,
+  Description: metadata.description,
+  Keywords: metadata.keywords,
+  Subject: metadata.keywords  // XMP Subject
+}
+await exiftool.write(filePath, tags, ['-overwrite_original'])
 ```
 
 ---
 
-## 8. RESPONSE FORMAT
+## 7. BATCH PROCESSING
 
-**IF NORMAL:**
-1. **Rationale:** (1 sentence on the architectural decision).
-2. **The Code:** (Production-ready, using specified stack).
+### 7.1 Rate Limiting
+```typescript
+// 500ms between API requests to avoid rate limiting
+const REQUEST_INTERVAL_MS = 500
 
-**IF "ULTRATHINK" IS ACTIVE:**
-1. **Deep Reasoning Chain:** (Detailed breakdown of Electron architecture, metadata standards, and AI integration decisions).
-2. **Edge Case Analysis:** (What could go wrong: file permissions, API failures, invalid metadata, process crashes).
-3. **Performance Considerations:** (Memory usage for large batches, ExifTool process management, UI responsiveness).
-4. **Security Review:** (IPC channel safety, API key storage, file system access scope).
-5. **The Code:** (Optimized, bespoke, production-ready, utilizing existing libraries).
-
----
-
-## 9. QUICK REFERENCE
-
-### File Structure (electron-vite)
-```
-src/
-├── main/           → Node.js backend (ExifTool, API, IPC handlers)
-├── preload/        → Context bridge (secure API exposure)
-├── renderer/       → React frontend (Zustand, shadcn/ui)
-└── shared/         → Types and constants
-```
-
-### Key Dependencies
-```json
-{
-  "electron": "^28.0.0",
-  "electron-vite": "^2.0.0",
-  "react": "^18.2.0",
-  "zustand": "^5.0.0",
-  "exiftool-vendored": "latest",
-  "sharp": "latest",
-  "openai": "latest",
-  "electron-store": "latest"
+for (const file of pendingFiles) {
+  await generateMetadata(file)
+  await sleep(REQUEST_INTERVAL_MS)
 }
 ```
 
-### shadcn/ui Components to Use
-- `Dialog` → Settings modal
-- `Button` → All buttons
-- `Input` → Text fields
-- `Textarea` → Description field
-- `Badge` → Keyword chips
-- `Progress` → Score bar
-- `Toast` → Notifications
-- `DropdownMenu` → Context menus
+### 7.2 Preview Loading (Concurrency)
+```typescript
+// Load previews in parallel, max 3 at a time
+const concurrency = 3
+const chunks = chunkArray(files, concurrency)
+for (const chunk of chunks) {
+  await Promise.all(chunk.map(loadPreview))
+}
+```
+
+### 7.3 Stop Functionality
+```typescript
+let stopBatchFlag = false
+
+// In processing loop
+if (stopBatchFlag) break
+
+// Stop action
+const stopBatchProcessing = () => { stopBatchFlag = true }
+```
+
+---
+
+## 8. AI INTEGRATION
+
+### 8.1 OpenRouter via OpenAI SDK
+```typescript
+import OpenAI from 'openai'
+
+const client = new OpenAI({
+  apiKey: settings.apiKey,
+  baseURL: 'https://openrouter.ai/api/v1',
+  defaultHeaders: {
+    'HTTP-Referer': 'https://stockmetadata.pro',
+    'X-Title': 'StockMetadata Pro'
+  }
+})
+```
+
+### 8.2 Image to Base64
+```typescript
+// Resize before sending to API (save tokens)
+const imageBuffer = await sharp(imagePath)
+  .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+  .jpeg({ quality: 75 })
+  .toBuffer()
+
+const base64 = imageBuffer.toString('base64')
+```
+
+### 8.3 Response Validation
+- Parse JSON with try/catch, retry on failure
+- Filter blacklisted words from keywords
+- Calculate score based on length/count requirements
+- Limit keywords to 50
+
+---
+
+## 9. TESTING
+
+### 9.1 Vitest Configuration
+```typescript
+// vitest.config.ts
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/tests/setup.ts'],
+  },
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src/renderer/src'),
+      '@shared': resolve(__dirname, 'src/shared')
+    }
+  }
+})
+```
+
+### 9.2 Mock Electron API
+```typescript
+// src/tests/setup.ts
+Object.defineProperty(window, 'api', {
+  value: {
+    getSettings: vi.fn().mockResolvedValue({}),
+    generateMetadata: vi.fn().mockResolvedValue({ title: '', ... }),
+    // ... other mocks
+  }
+})
+```
+
+---
+
+## 10. QUICK REFERENCE
+
+### File Structure
+```
+src/
+├── main/              → Node.js backend
+│   ├── services/      → OpenRouter, ExifTool, FileProcessors
+│   └── utils/         → Backup
+├── preload/           → Context bridge (webUtils, IPC)
+├── renderer/          → React frontend
+│   ├── components/    → DropZone, FileList, AttributeEditor, etc.
+│   ├── stores/        → Zustand (files, settings, editor)
+│   └── lib/           → Utilities
+├── shared/            → Types, constants, blacklist
+└── tests/             → Unit tests
+```
+
+### Key Dependencies (Verified Versions)
+```json
+{
+  "electron": "^33.2.1",
+  "electron-vite": "^2.3.0",
+  "react": "^18.3.1",
+  "zustand": "^5.0.2",
+  "exiftool-vendored": "^28.6.0",
+  "sharp": "^0.33.5",
+  "openai": "^4.77.0",
+  "electron-store": "^8.2.0",
+  "@dnd-kit/core": "^6.3.1",
+  "vitest": "^2.1.8"
+}
+```
+
+### Commands
+```bash
+npm run dev       # Development mode
+npm run build     # Production build
+npm run preview   # Preview production build
+npm test          # Run unit tests
+npm run package   # Package for distribution
+```
+
+---
+
+## 11. COMMON PITFALLS
+
+| Issue | Solution |
+|-------|----------|
+| `electron-store` ESM error | Use v8, not v10+ |
+| White screen in Electron | Check CSP, verify renderer loads |
+| `File.path` undefined | Use `webUtils.getPathForFile` |
+| Images not showing | Add `img-src 'self' data: blob:` to CSP |
+| TailwindCSS classes not working | Use inline styles for reliability |
+| ExifTool WriteTags type error | Use standard fields (Title, not IPTC:Title) |
+| Drag & drop not working | Disable sandbox in webPreferences |
 
 ---
 
