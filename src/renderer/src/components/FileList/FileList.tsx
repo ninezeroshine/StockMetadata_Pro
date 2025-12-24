@@ -26,23 +26,15 @@ export function FileList({ files, selectedId, onSelect }: FileListProps) {
 
     if (files.length === 0) {
         return (
-            <div style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '16px',
-                color: '#6b7280',
-                fontSize: '14px'
-            }}>
+            <div className="flex-1 flex items-center justify-center p-4 text-muted-foreground text-sm">
                 No files loaded
             </div>
         )
     }
 
     return (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto">
                 {files.map((file) => (
                     <FileListItem
                         key={file.id}
@@ -55,35 +47,16 @@ export function FileList({ files, selectedId, onSelect }: FileListProps) {
             </div>
 
             {/* Footer with Generate All and Clear All */}
-            <div style={{
-                padding: '12px',
-                borderTop: '1px solid #e5e7eb',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px'
-            }}>
+            <div className="p-3 border-t border-border flex flex-col gap-2">
                 {/* Batch Progress */}
                 {isProcessingBatch && (
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '8px',
-                        backgroundColor: '#f3f4f6',
-                        borderRadius: '6px',
-                        fontSize: '12px'
-                    }}>
-                        <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} />
+                    <div className="flex items-center gap-2 p-2 bg-muted rounded-md text-xs">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         <span>Processing {batchProgress.current}/{batchProgress.total}</span>
-                        <div style={{ flex: 1, height: '4px', backgroundColor: '#e5e7eb', borderRadius: '2px' }}>
+                        <div className="flex-1 h-1 bg-border rounded-full">
                             <div
-                                style={{
-                                    height: '100%',
-                                    width: `${(batchProgress.current / batchProgress.total) * 100}%`,
-                                    backgroundColor: '#22c55e',
-                                    borderRadius: '2px',
-                                    transition: 'width 0.3s ease'
-                                }}
+                                className="h-full bg-green-500 rounded-full transition-all duration-300"
+                                style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }}
                             />
                         </div>
                     </div>
@@ -94,32 +67,24 @@ export function FileList({ files, selectedId, onSelect }: FileListProps) {
                     <button
                         onClick={isProcessingBatch ? stopBatchProcessing : generateAllMetadata}
                         disabled={!hasApiKey && !isProcessingBatch}
-                        style={{
-                            width: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            padding: '8px 12px',
-                            fontSize: '14px',
-                            fontWeight: 500,
-                            borderRadius: '6px',
-                            border: 'none',
-                            backgroundColor: isProcessingBatch ? '#ef4444' : '#22c55e',
-                            color: '#ffffff',
-                            cursor: hasApiKey || isProcessingBatch ? 'pointer' : 'not-allowed',
-                            opacity: hasApiKey || isProcessingBatch ? 1 : 0.5,
-                            transition: 'all 0.2s ease'
-                        }}
+                        className={`
+                            w-full flex items-center justify-center gap-2 py-2 px-3 
+                            text-sm font-medium rounded-md border-none cursor-pointer
+                            transition-all duration-200
+                            ${isProcessingBatch
+                                ? 'bg-red-500 hover:bg-red-600 text-white'
+                                : 'bg-green-500 hover:bg-green-600 text-white'}
+                            ${(!hasApiKey && !isProcessingBatch) ? 'opacity-50 cursor-not-allowed' : ''}
+                        `}
                     >
                         {isProcessingBatch ? (
                             <>
-                                <Square style={{ width: '16px', height: '16px' }} />
+                                <Square className="w-4 h-4" />
                                 Stop Processing
                             </>
                         ) : (
                             <>
-                                <Sparkles style={{ width: '16px', height: '16px' }} />
+                                <Sparkles className="w-4 h-4" />
                                 Generate All ({pendingCount})
                             </>
                         )}
@@ -129,25 +94,9 @@ export function FileList({ files, selectedId, onSelect }: FileListProps) {
                 {/* Clear All Button */}
                 <button
                     onClick={clearAll}
-                    style={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        padding: '6px 12px',
-                        fontSize: '14px',
-                        borderRadius: '6px',
-                        border: 'none',
-                        backgroundColor: 'transparent',
-                        color: '#ef4444',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s ease'
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    className="w-full flex items-center justify-center gap-2 py-1.5 px-3 text-sm rounded-md bg-transparent text-destructive hover:bg-destructive/10 transition-colors cursor-pointer border-none"
                 >
-                    <Trash2 style={{ width: '16px', height: '16px' }} />
+                    <Trash2 className="w-4 h-4" />
                     Clear All
                 </button>
             </div>
@@ -163,13 +112,11 @@ interface FileListItemProps {
 }
 
 function FileListItem({ file, isSelected, onClick, onRemove }: FileListItemProps) {
-    const iconStyle = { width: '16px', height: '16px' }
-
     const statusIcon = {
-        pending: <ImageIcon style={{ ...iconStyle, color: '#6b7280' }} />,
-        processing: <Loader2 style={{ ...iconStyle, color: '#eab308', animation: 'spin 1s linear infinite' }} />,
-        done: <CheckCircle2 style={{ ...iconStyle, color: '#22c55e' }} />,
-        error: <XCircle style={{ ...iconStyle, color: '#ef4444' }} />
+        pending: <ImageIcon className="w-4 h-4 text-muted-foreground" />,
+        processing: <Loader2 className="w-4 h-4 text-yellow-500 animate-spin" />,
+        done: <CheckCircle2 className="w-4 h-4 text-green-500" />,
+        error: <XCircle className="w-4 h-4 text-destructive" />
     }[file.status]
 
     return (
@@ -181,24 +128,35 @@ function FileListItem({ file, isSelected, onClick, onRemove }: FileListItemProps
                 gap: '12px',
                 padding: '8px 12px',
                 cursor: 'pointer',
-                backgroundColor: isSelected ? '#f3f4f6' : 'transparent',
-                transition: 'background-color 0.15s ease'
+                backgroundColor: isSelected ? 'var(--accent)' : 'transparent',
+                borderLeft: isSelected ? '3px solid var(--primary)' : '3px solid transparent',
+                transition: 'all 0.15s ease'
             }}
-            onMouseOver={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'rgba(243, 244, 246, 0.5)' }}
-            onMouseOut={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent' }}
+            onMouseEnter={(e) => {
+                if (!isSelected) {
+                    e.currentTarget.style.backgroundColor = 'var(--muted)'
+                }
+            }}
+            onMouseLeave={(e) => {
+                if (!isSelected) {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                }
+            }}
         >
             {/* Thumbnail */}
-            <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '4px',
-                backgroundColor: '#f3f4f6',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                flexShrink: 0
-            }}>
+            <div
+                style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '6px',
+                    backgroundColor: 'var(--muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    flexShrink: 0
+                }}
+            >
                 {file.preview ? (
                     <img
                         src={file.preview}
@@ -206,34 +164,40 @@ function FileListItem({ file, isSelected, onClick, onRemove }: FileListItemProps
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                 ) : (
-                    <ImageIcon style={{ width: '24px', height: '24px', color: '#6b7280' }} />
+                    <ImageIcon className="w-6 h-6 text-muted-foreground" />
                 )}
             </div>
 
             {/* File info */}
             <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    margin: 0,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                }} title={file.fileName}>
+                <p
+                    className="text-foreground"
+                    style={{
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        margin: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                    }}
+                    title={file.fileName}
+                >
                     {truncate(file.fileName, 25)}
                 </p>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '12px',
-                    color: '#6b7280',
-                    marginTop: '2px'
-                }}>
+                <div
+                    className="text-muted-foreground"
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '12px',
+                        marginTop: '2px'
+                    }}
+                >
                     {statusIcon}
                     <span style={{ textTransform: 'capitalize' }}>{file.status}</span>
                     {file.error && (
-                        <span style={{ color: '#ef4444' }} title={file.error}>
+                        <span className="text-destructive" title={file.error}>
                             - {truncate(file.error, 20)}
                         </span>
                     )}
@@ -251,15 +215,21 @@ function FileListItem({ file, isSelected, onClick, onRemove }: FileListItemProps
                     borderRadius: '4px',
                     border: 'none',
                     backgroundColor: 'transparent',
-                    color: '#6b7280',
                     cursor: 'pointer',
                     opacity: 0.5,
-                    transition: 'opacity 0.15s ease'
+                    transition: 'all 0.15s ease',
+                    color: 'var(--muted-foreground)'
                 }}
-                onMouseOver={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = '#ef4444' }}
-                onMouseOut={(e) => { e.currentTarget.style.opacity = '0.5'; e.currentTarget.style.color = '#6b7280' }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = '1'
+                    e.currentTarget.style.color = 'var(--destructive)'
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = '0.5'
+                    e.currentTarget.style.color = 'var(--muted-foreground)'
+                }}
             >
-                <XCircle style={{ width: '16px', height: '16px' }} />
+                <XCircle className="w-4 h-4" />
             </button>
         </div>
     )

@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react'
-import { Settings, FolderOpen } from 'lucide-react'
+import { Settings, FolderOpen, Sun, Moon } from 'lucide-react'
 
 import { useFilesStore } from './stores/files.store'
 import { useSettingsStore } from './stores/settings.store'
@@ -13,7 +13,7 @@ import { cn } from './lib/utils'
 
 function App() {
     const { files, addFiles, selectFile, selectedFileId, updateFilePreview } = useFilesStore()
-    const { loadSettings, openSettings, isSettingsOpen, closeSettings } = useSettingsStore()
+    const { loadSettings, openSettings, isSettingsOpen, closeSettings, toggleTheme, resolvedTheme } = useSettingsStore()
     const { loadFromMetadata } = useEditorStore()
 
     // Load settings on mount
@@ -84,6 +84,23 @@ function App() {
                         <FolderOpen className="w-4 h-4" />
                         Open Files
                     </button>
+
+                    {/* Theme Toggle */}
+                    <button
+                        onClick={toggleTheme}
+                        className={cn(
+                            "p-2 rounded-md",
+                            "hover:bg-secondary transition-colors"
+                        )}
+                        title={`Switch to ${resolvedTheme === 'light' ? 'dark' : 'light'} theme`}
+                    >
+                        {resolvedTheme === 'light' ? (
+                            <Moon className="w-5 h-5" />
+                        ) : (
+                            <Sun className="w-5 h-5" />
+                        )}
+                    </button>
+
                     <button
                         onClick={openSettings}
                         className={cn(

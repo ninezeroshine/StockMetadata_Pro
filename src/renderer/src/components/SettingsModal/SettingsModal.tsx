@@ -105,15 +105,16 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
             {/* Modal */}
             <div style={{
                 position: 'relative',
-                backgroundColor: '#ffffff',
-                border: '1px solid #e5e7eb',
+                backgroundColor: 'var(--popover)',
+                border: '1px solid var(--border)',
                 borderRadius: '12px',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                 width: '600px',
                 maxHeight: '80vh',
                 overflow: 'hidden',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                color: 'var(--popover-foreground)'
             }}>
                 {/* Header */}
                 <div style={{
@@ -121,7 +122,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '16px 24px',
-                    borderBottom: '1px solid #e5e7eb'
+                    borderBottom: '1px solid var(--border)'
                 }}>
                     <h2 style={{ fontSize: '18px', fontWeight: 600, margin: 0 }}>Settings</h2>
                     <button
@@ -131,7 +132,8 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                             borderRadius: '4px',
                             border: 'none',
                             background: 'transparent',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            color: 'var(--muted-foreground)'
                         }}
                     >
                         <X style={{ width: '20px', height: '20px' }} />
@@ -149,7 +151,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                 }}>
                     {/* API Configuration */}
                     <section style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <h3 style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <h3 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                             🔑 API Configuration
                         </h3>
 
@@ -175,7 +177,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                                         background: 'transparent',
                                         border: 'none',
                                         cursor: 'pointer',
-                                        color: '#6b7280'
+                                        color: 'var(--muted-foreground)'
                                     }}
                                 >
                                     {showApiKey ? <EyeOff style={{ width: '16px', height: '16px' }} /> : <Eye style={{ width: '16px', height: '16px' }} />}
@@ -192,14 +194,14 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                                 placeholder={DEFAULT_MODEL}
                                 style={inputStyle}
                             />
-                            <p style={{ fontSize: '12px', color: '#6b7280' }}>Default: {DEFAULT_MODEL}</p>
+                            <p style={{ fontSize: '12px', color: 'var(--muted-foreground)' }}>Default: {DEFAULT_MODEL}</p>
                         </div>
                     </section>
 
                     {/* System Prompt */}
                     <section style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <h3 style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            <h3 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                 📝 System Prompt
                             </h3>
                             <button
@@ -210,7 +212,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                                     gap: '4px',
                                     padding: '4px 8px',
                                     fontSize: '12px',
-                                    color: '#6b7280',
+                                    color: 'var(--muted-foreground)',
                                     background: 'transparent',
                                     border: 'none',
                                     borderRadius: '4px',
@@ -236,7 +238,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
 
                     {/* Backup */}
                     <section style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <h3 style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <h3 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                             💾 Backup
                         </h3>
 
@@ -264,8 +266,9 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                                     <button style={{
                                         padding: '8px 12px',
                                         borderRadius: '6px',
-                                        border: '1px solid #e5e7eb',
-                                        background: '#f3f4f6',
+                                        border: '1px solid var(--border)',
+                                        background: 'var(--secondary)',
+                                        color: 'var(--secondary-foreground)',
                                         cursor: 'pointer'
                                     }}>
                                         <FolderOpen style={{ width: '16px', height: '16px' }} />
@@ -277,7 +280,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
 
                     {/* Language */}
                     <section style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <h3 style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <h3 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                             🌐 Language
                         </h3>
 
@@ -305,8 +308,8 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                     justifyContent: 'flex-end',
                     gap: '12px',
                     padding: '16px 24px',
-                    borderTop: '1px solid #e5e7eb',
-                    backgroundColor: '#f9fafb'
+                    borderTop: '1px solid var(--border)',
+                    backgroundColor: 'var(--muted)'
                 }}>
                     <button
                         onClick={onClose}
@@ -314,7 +317,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                             ...buttonStyle,
                             background: 'transparent',
                             border: 'none',
-                            color: '#374151'
+                            color: 'var(--foreground)'
                         }}
                     >
                         Cancel
@@ -324,8 +327,8 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                         disabled={isSaving}
                         style={{
                             ...buttonStyle,
-                            backgroundColor: '#171717',
-                            color: '#ffffff',
+                            backgroundColor: 'var(--primary)',
+                            color: 'var(--primary-foreground)',
                             border: 'none',
                             opacity: isSaving ? 0.5 : 1
                         }}

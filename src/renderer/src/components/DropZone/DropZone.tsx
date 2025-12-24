@@ -79,9 +79,9 @@ export function DropZone({ onDrop }: DropZoneProps) {
                 margin: '12px',
                 padding: '24px',
                 border: '2px dashed',
-                borderColor: isDragOver ? '#171717' : '#e5e7eb',
+                borderColor: isDragOver ? 'var(--primary)' : 'var(--border)',
                 borderRadius: '8px',
-                backgroundColor: isDragOver ? 'rgba(0, 0, 0, 0.02)' : 'transparent',
+                backgroundColor: isDragOver ? 'var(--accent)' : 'transparent',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
@@ -96,13 +96,13 @@ export function DropZone({ onDrop }: DropZoneProps) {
                 style={{
                     width: '32px',
                     height: '32px',
-                    color: isDragOver ? '#171717' : '#6b7280'
+                    color: isDragOver ? 'var(--primary)' : 'var(--muted-foreground)'
                 }}
             />
             <div style={{ fontSize: '14px' }}>
                 <p style={{
                     fontWeight: 500,
-                    color: isDragOver ? '#171717' : '#171717',
+                    color: 'var(--foreground)',
                     margin: 0
                 }}>
                     Drop files here
@@ -110,7 +110,7 @@ export function DropZone({ onDrop }: DropZoneProps) {
                 <p style={{
                     fontSize: '12px',
                     marginTop: '4px',
-                    color: '#6b7280',
+                    color: 'var(--muted-foreground)',
                     margin: '4px 0 0 0'
                 }}>
                     JPG, JPEG, PNG

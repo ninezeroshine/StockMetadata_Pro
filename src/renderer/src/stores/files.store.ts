@@ -1,12 +1,16 @@
 import { create } from 'zustand'
-import type { FileItem, MetadataResult } from '@shared/types'
+import type { FileItem, MetadataResult, RawMetadata } from '@shared/types'
 import { generateId, getFileName } from '../lib/utils'
-import { MAX_CONCURRENT_REQUESTS, REQUEST_INTERVAL_MS } from '@shared/constants'
+import { REQUEST_INTERVAL_MS } from '@shared/constants'
+
+// Concurrency limit for file operations
+const CONCURRENCY_LIMIT = 3
 
 interface FilesState {
     files: FileItem[]
     selectedFileId: string | null
     isProcessingBatch: boolean
+    isLoadingMetadata: boolean
     batchProgress: { current: number; total: number }
 
     // Actions
@@ -17,10 +21,12 @@ interface FilesState {
     updateFileStatus: (id: string, status: FileItem['status'], error?: string) => void
     updateFileMetadata: (id: string, metadata: MetadataResult) => void
     updateFilePreview: (id: string, preview: string) => void
+    updateExistingMetadata: (id: string, existingMetadata: RawMetadata) => void
     incrementRetry: (id: string) => void
 
     // Batch processing
     loadAllPreviews: () => Promise<void>
+    loadAllExistingMetadata: () => Promise<void>
     generateAllMetadata: () => Promise<void>
     stopBatchProcessing: () => void
 
@@ -36,6 +42,7 @@ export const useFilesStore = create<FilesState>((set, get) => ({
     files: [],
     selectedFileId: null,
     isProcessingBatch: false,
+    isLoadingMetadata: false,
     batchProgress: { current: 0, total: 0 },
 
     addFiles: (filePaths) => {
@@ -44,7 +51,8 @@ export const useFilesStore = create<FilesState>((set, get) => ({
             filePath,
             fileName: getFileName(filePath),
             status: 'pending' as const,
-            retryCount: 0
+            retryCount: 0,
+            hasExistingMetadata: false
         }))
 
         set((state) => ({
@@ -52,9 +60,10 @@ export const useFilesStore = create<FilesState>((set, get) => ({
             selectedFileId: state.selectedFileId || newFiles[0]?.id || null
         }))
 
-        // Auto-load previews for new files in background
+        // Auto-load previews and existing metadata for new files in background
         setTimeout(() => {
             get().loadAllPreviews()
+            get().loadAllExistingMetadata()
         }, 100)
     },
 
@@ -70,7 +79,13 @@ export const useFilesStore = create<FilesState>((set, get) => ({
 
     clearAll: () => {
         stopBatchFlag = true
-        set({ files: [], selectedFileId: null, isProcessingBatch: false, batchProgress: { current: 0, total: 0 } })
+        set({
+            files: [],
+            selectedFileId: null,
+            isProcessingBatch: false,
+            isLoadingMetadata: false,
+            batchProgress: { current: 0, total: 0 }
+        })
     },
 
     selectFile: (id) => {
@@ -101,6 +116,25 @@ export const useFilesStore = create<FilesState>((set, get) => ({
         }))
     },
 
+    updateExistingMetadata: (id, existingMetadata) => {
+        const hasContent = !!(
+            existingMetadata.stock.title ||
+            existingMetadata.stock.description ||
+            existingMetadata.stock.keywords.length > 0 ||
+            existingMetadata.tagCount > 0
+        )
+
+        set((state) => ({
+            files: state.files.map((f) =>
+                f.id === id ? {
+                    ...f,
+                    existingMetadata,
+                    hasExistingMetadata: hasContent
+                } : f
+            )
+        }))
+    },
+
     incrementRetry: (id) => {
         set((state) => ({
             files: state.files.map((f) =>
@@ -116,11 +150,10 @@ export const useFilesStore = create<FilesState>((set, get) => ({
 
         if (filesWithoutPreview.length === 0) return
 
-        // Process in parallel with concurrency limit (3 at a time)
-        const concurrency = 3
+        // Process in parallel with concurrency limit
         const chunks: FileItem[][] = []
-        for (let i = 0; i < filesWithoutPreview.length; i += concurrency) {
-            chunks.push(filesWithoutPreview.slice(i, i + concurrency))
+        for (let i = 0; i < filesWithoutPreview.length; i += CONCURRENCY_LIMIT) {
+            chunks.push(filesWithoutPreview.slice(i, i + CONCURRENCY_LIMIT))
         }
 
         for (const chunk of chunks) {
@@ -135,6 +168,37 @@ export const useFilesStore = create<FilesState>((set, get) => ({
                 })
             )
         }
+    },
+
+    // Load existing metadata for all files (with concurrency limit)
+    loadAllExistingMetadata: async () => {
+        const { files, updateExistingMetadata } = get()
+        const filesWithoutMetadata = files.filter(f => !f.existingMetadata)
+
+        if (filesWithoutMetadata.length === 0) return
+
+        set({ isLoadingMetadata: true })
+
+        // Process in parallel with concurrency limit
+        const chunks: FileItem[][] = []
+        for (let i = 0; i < filesWithoutMetadata.length; i += CONCURRENCY_LIMIT) {
+            chunks.push(filesWithoutMetadata.slice(i, i + CONCURRENCY_LIMIT))
+        }
+
+        for (const chunk of chunks) {
+            await Promise.all(
+                chunk.map(async (file) => {
+                    try {
+                        const metadata = await window.api.readAllMetadata(file.filePath)
+                        updateExistingMetadata(file.id, metadata)
+                    } catch (error) {
+                        console.error('Failed to load metadata for', file.fileName, error)
+                    }
+                })
+            )
+        }
+
+        set({ isLoadingMetadata: false })
     },
 
     // Generate metadata for all pending files
@@ -194,3 +258,4 @@ export const useFilesStore = create<FilesState>((set, get) => ({
         return get().files.filter((f) => f.status === 'pending')
     }
 }))
+

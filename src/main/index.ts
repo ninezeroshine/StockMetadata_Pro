@@ -2,7 +2,7 @@ import { app, BrowserWindow, shell, ipcMain, dialog, safeStorage } from 'electro
 import { join } from 'path'
 import Store from 'electron-store'
 import { DEFAULT_SETTINGS, DEFAULT_SYSTEM_PROMPT } from '../shared/constants'
-import type { AppSettings, WriteMetadataParams } from '../shared/types'
+import type { AppSettings, WriteMetadataParams, DeleteMetadataParams } from '../shared/types'
 import { OpenRouterService } from './services/openrouter.service'
 import { ExifToolService } from './services/exiftool.service'
 import { getProcessor } from './services/file-processor'
@@ -186,6 +186,28 @@ function registerIpcHandlers(): void {
         }
 
         await processor.writeMetadata(filePath, { title, description, keywords })
+    })
+
+    // Metadata reading - get all metadata from file
+    ipcMain.handle('metadata:readAll', async (_, filePath: string) => {
+        return await ExifToolService.readAllMetadata(filePath)
+    })
+
+    // Metadata deletion - delete specific tags or all metadata
+    ipcMain.handle('metadata:delete', async (_, params: DeleteMetadataParams) => {
+        const { filePath, tags, deleteAll, createBackup } = params
+
+        // Create backup if enabled
+        if (createBackup) {
+            const backupPath = store.get('backupPath', '')
+            await createBackupFile(filePath, backupPath)
+        }
+
+        if (deleteAll) {
+            await ExifToolService.deleteAllMetadata(filePath)
+        } else if (tags.length > 0) {
+            await ExifToolService.deleteTags(filePath, tags)
+        }
     })
 
     // App handlers

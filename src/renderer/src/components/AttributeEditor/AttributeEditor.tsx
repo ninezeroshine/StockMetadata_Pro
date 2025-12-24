@@ -5,8 +5,9 @@ import { useSettingsStore } from '@/stores/settings.store'
 import { useFilesStore } from '@/stores/files.store'
 import { KeywordList } from '@/components/KeywordList/KeywordList'
 import { ScoreBar } from '@/components/ScoreBar/ScoreBar'
+import { MetadataViewer } from '@/components/MetadataViewer/MetadataViewer'
 import { cn, getScoreColor } from '@/lib/utils'
-import { RefreshCw, Copy, Save, Loader2 } from 'lucide-react'
+import { RefreshCw, Copy, Save, Loader2, FileSearch, Download, Trash2 } from 'lucide-react'
 import { TITLE_MAX_LENGTH, DESCRIPTION_MAX_LENGTH } from '@shared/constants'
 
 interface AttributeEditorProps {
@@ -20,6 +21,7 @@ export function AttributeEditor({ file }: AttributeEditorProps) {
         editedKeywords,
         setEditedTitle,
         setEditedDescription,
+        setEditedKeywords,
         addKeyword,
         removeKeyword,
         reorderKeywords,
@@ -31,8 +33,10 @@ export function AttributeEditor({ file }: AttributeEditorProps) {
     } = useEditorStore()
 
     const { settings } = useSettingsStore()
-    const { updateFileMetadata, updateFileStatus } = useFilesStore()
+    const { updateFileMetadata, updateFileStatus, updateExistingMetadata } = useFilesStore()
     const [newKeyword, setNewKeyword] = useState('')
+    const [showMetadataViewer, setShowMetadataViewer] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const score = file.metadata?.score || 0
 
@@ -76,6 +80,9 @@ export function AttributeEditor({ file }: AttributeEditorProps) {
                 keywords: editedKeywords,
                 score
             })
+            // Also refresh existing metadata
+            const newMetadata = await window.api.readAllMetadata(file.filePath)
+            updateExistingMetadata(file.id, newMetadata)
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Save failed'
             alert(`Failed to save: ${message}`)
@@ -91,7 +98,8 @@ export function AttributeEditor({ file }: AttributeEditorProps) {
         settings.backupEnabled,
         score,
         setIsSaving,
-        updateFileMetadata
+        updateFileMetadata,
+        updateExistingMetadata
     ])
 
     // Copy all metadata to clipboard
@@ -104,6 +112,58 @@ export function AttributeEditor({ file }: AttributeEditorProps) {
 
         navigator.clipboard.writeText(text)
     }, [editedTitle, editedDescription, editedKeywords])
+
+    // Load existing metadata from file into editor
+    const handleLoadFromFile = useCallback(() => {
+        if (file.existingMetadata?.stock) {
+            setEditedTitle(file.existingMetadata.stock.title)
+            setEditedDescription(file.existingMetadata.stock.description)
+            setEditedKeywords([...file.existingMetadata.stock.keywords])
+        }
+    }, [file.existingMetadata, setEditedTitle, setEditedDescription, setEditedKeywords])
+
+    // Delete specific tags
+    const handleDeleteTags = useCallback(async (tags: string[]) => {
+        setIsDeleting(true)
+        try {
+            await window.api.deleteMetadata({
+                filePath: file.filePath,
+                tags,
+                deleteAll: false,
+                createBackup: settings.backupEnabled ?? true
+            })
+            // Refresh metadata after deletion
+            const newMetadata = await window.api.readAllMetadata(file.filePath)
+            updateExistingMetadata(file.id, newMetadata)
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Delete failed'
+            alert(`Failed to delete tags: ${message}`)
+        } finally {
+            setIsDeleting(false)
+        }
+    }, [file.id, file.filePath, settings.backupEnabled, updateExistingMetadata])
+
+    // Delete all metadata
+    const handleDeleteAll = useCallback(async () => {
+        setIsDeleting(true)
+        try {
+            await window.api.deleteMetadata({
+                filePath: file.filePath,
+                tags: [],
+                deleteAll: true,
+                createBackup: settings.backupEnabled ?? true
+            })
+            // Refresh metadata after deletion
+            const newMetadata = await window.api.readAllMetadata(file.filePath)
+            updateExistingMetadata(file.id, newMetadata)
+            setShowMetadataViewer(false)
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Delete failed'
+            alert(`Failed to delete all metadata: ${message}`)
+        } finally {
+            setIsDeleting(false)
+        }
+    }, [file.id, file.filePath, settings.backupEnabled, updateExistingMetadata])
 
     // Add keyword on Enter
     const handleKeywordInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -131,6 +191,40 @@ export function AttributeEditor({ file }: AttributeEditorProps) {
                     )}
                 </div>
             </div>
+
+            {/* Existing Metadata Indicator & Actions */}
+            {file.hasExistingMetadata && (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-primary/10 border border-primary/20">
+                    <div className="flex items-center gap-2">
+                        <FileSearch className="w-4 h-4 text-primary" />
+                        <span className="text-sm text-primary">
+                            This file has existing metadata ({file.existingMetadata?.tagCount || 0} tags)
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleLoadFromFile}
+                            className={cn(
+                                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium",
+                                "bg-primary/20 text-primary hover:bg-primary/30 transition-colors"
+                            )}
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            Load to Editor
+                        </button>
+                        <button
+                            onClick={() => setShowMetadataViewer(true)}
+                            className={cn(
+                                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium",
+                                "bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                            )}
+                        >
+                            <FileSearch className="w-3.5 h-3.5" />
+                            View All Tags
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Title */}
             <div className="space-y-2">
@@ -219,7 +313,7 @@ export function AttributeEditor({ file }: AttributeEditorProps) {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-3 pt-4 border-t border-border">
+            <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
                 <button
                     onClick={handleGenerate}
                     disabled={isGenerating || !settings.apiKey}
@@ -267,7 +361,31 @@ export function AttributeEditor({ file }: AttributeEditorProps) {
                     )}
                     {isSaving ? 'Saving...' : 'Save'}
                 </button>
+
+                {/* View All Tags Button (always visible) */}
+                <button
+                    onClick={() => setShowMetadataViewer(true)}
+                    className={cn(
+                        "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium",
+                        "bg-secondary text-secondary-foreground",
+                        "hover:bg-secondary/80 transition-colors"
+                    )}
+                >
+                    <FileSearch className="w-4 h-4" />
+                    View Tags
+                </button>
             </div>
+
+            {/* Metadata Viewer Modal */}
+            <MetadataViewer
+                open={showMetadataViewer}
+                onClose={() => setShowMetadataViewer(false)}
+                metadata={file.existingMetadata}
+                fileName={file.fileName}
+                onDeleteTags={handleDeleteTags}
+                onDeleteAll={handleDeleteAll}
+            />
         </div>
     )
 }
+

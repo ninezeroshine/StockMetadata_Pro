@@ -27,13 +27,14 @@ export const MAX_RETRY_COUNT = 2
 
 // Default settings
 export const DEFAULT_SETTINGS: AppSettings = {
-    apiKey: '',
-    model: DEFAULT_MODEL,
-    systemPrompt: '', // Will be set from DEFAULT_SYSTEM_PROMPT
-    backupEnabled: true,
-    backupPath: '',
-    metadataLanguage: 'en',
-    windowBounds: { x: 100, y: 100, width: 1200, height: 800 }
+  apiKey: '',
+  model: DEFAULT_MODEL,
+  systemPrompt: '', // Will be set from DEFAULT_SYSTEM_PROMPT
+  backupEnabled: true,
+  backupPath: '',
+  metadataLanguage: 'en',
+  theme: 'light',
+  windowBounds: { x: 100, y: 100, width: 1200, height: 800 }
 }
 
 // Default system prompt

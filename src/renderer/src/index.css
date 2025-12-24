@@ -2,54 +2,66 @@
 
 /* CSS Variables for theme (shadcn/ui compatible) */
 :root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(240 10% 3.9%);
+  /* Light theme - more varied off-white shades */
+  --background: hsl(210 20% 98%);
+  --foreground: hsl(222 47% 11%);
   --card: hsl(0 0% 100%);
-  --card-foreground: hsl(240 10% 3.9%);
+  --card-foreground: hsl(222 47% 11%);
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(240 10% 3.9%);
-  --primary: hsl(240 5.9% 10%);
-  --primary-foreground: hsl(0 0% 98%);
-  --secondary: hsl(240 4.8% 95.9%);
-  --secondary-foreground: hsl(240 5.9% 10%);
-  --muted: hsl(240 4.8% 95.9%);
-  --muted-foreground: hsl(240 3.8% 46.1%);
-  --accent: hsl(240 4.8% 95.9%);
-  --accent-foreground: hsl(240 5.9% 10%);
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(240 5.9% 90%);
-  --input: hsl(240 5.9% 90%);
-  --ring: hsl(240 5.9% 10%);
+  --popover-foreground: hsl(222 47% 11%);
+  --primary: hsl(221 83% 53%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(210 20% 94%);
+  --secondary-foreground: hsl(222 47% 11%);
+  --muted: hsl(210 20% 96%);
+  --muted-foreground: hsl(215 16% 47%);
+  --accent: hsl(210 20% 94%);
+  --accent-foreground: hsl(222 47% 11%);
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(214 20% 88%);
+  --input: hsl(214 20% 88%);
+  --ring: hsl(221 83% 53%);
   --radius: 0.5rem;
 
+  /* Surface levels for visual hierarchy */
+  --surface-1: hsl(0 0% 100%);
+  --surface-2: hsl(210 20% 97%);
+  --surface-3: hsl(210 20% 94%);
+
   /* Custom app colors */
-  --score-excellent: hsl(142.1 76.2% 36.3%);
-  --score-good: hsl(47.9 95.8% 53.1%);
-  --score-average: hsl(24.6 95% 53.1%);
-  --score-poor: hsl(0 84.2% 60.2%);
+  --score-excellent: hsl(142 76% 36%);
+  --score-good: hsl(48 96% 53%);
+  --score-average: hsl(25 95% 53%);
+  --score-poor: hsl(0 84% 60%);
 }
 
 .dark {
-  --background: hsl(240 10% 3.9%);
-  --foreground: hsl(0 0% 98%);
-  --card: hsl(240 10% 3.9%);
-  --card-foreground: hsl(0 0% 98%);
-  --popover: hsl(240 10% 3.9%);
-  --popover-foreground: hsl(0 0% 98%);
-  --primary: hsl(0 0% 98%);
-  --primary-foreground: hsl(240 5.9% 10%);
-  --secondary: hsl(240 3.7% 15.9%);
-  --secondary-foreground: hsl(0 0% 98%);
-  --muted: hsl(240 3.7% 15.9%);
-  --muted-foreground: hsl(240 5% 64.9%);
-  --accent: hsl(240 3.7% 15.9%);
-  --accent-foreground: hsl(0 0% 98%);
-  --destructive: hsl(0 62.8% 30.6%);
-  --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(240 3.7% 15.9%);
-  --input: hsl(240 3.7% 15.9%);
-  --ring: hsl(240 4.9% 83.9%);
+  /* Dark theme - neutral gray tones with depth */
+  --background: hsl(0 0% 9%);
+  --foreground: hsl(0 0% 95%);
+  --card: hsl(0 0% 12%);
+  --card-foreground: hsl(0 0% 95%);
+  --popover: hsl(0 0% 14%);
+  --popover-foreground: hsl(0 0% 95%);
+  --primary: hsl(210 100% 52%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(0 0% 18%);
+  --secondary-foreground: hsl(0 0% 95%);
+  --muted: hsl(0 0% 15%);
+  --muted-foreground: hsl(0 0% 60%);
+  --accent: hsl(0 0% 20%);
+  --accent-foreground: hsl(0 0% 95%);
+  --destructive: hsl(0 63% 45%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(0 0% 20%);
+  --input: hsl(0 0% 16%);
+  --ring: hsl(210 100% 52%);
+
+  /* Surface levels for visual hierarchy */
+  --surface-1: hsl(0 0% 12%);
+  --surface-2: hsl(0 0% 15%);
+  --surface-3: hsl(0 0% 18%);
 }
 
 * {

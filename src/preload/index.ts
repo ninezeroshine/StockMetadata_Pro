@@ -1,5 +1,12 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import type { ElectronAPI, AppSettings, WriteMetadataParams, MetadataResult } from '../shared/types'
+import type {
+    ElectronAPI,
+    AppSettings,
+    WriteMetadataParams,
+    DeleteMetadataParams,
+    MetadataResult,
+    RawMetadata
+} from '../shared/types'
 
 // Extended API with file path helper
 interface ExtendedElectronAPI extends ElectronAPI {
@@ -18,11 +25,17 @@ const api: ExtendedElectronAPI = {
     // Get file path from File object (for drag and drop)
     getPathForFile: (file: File) => webUtils.getPathForFile(file),
 
-    // Metadata
+    // Metadata - Generation & Writing
     generateMetadata: (imagePath: string): Promise<MetadataResult> =>
         ipcRenderer.invoke('metadata:generate', imagePath),
     writeMetadata: (params: WriteMetadataParams) =>
         ipcRenderer.invoke('metadata:write', params),
+
+    // Metadata - Reading & Deletion
+    readAllMetadata: (filePath: string): Promise<RawMetadata> =>
+        ipcRenderer.invoke('metadata:readAll', filePath),
+    deleteMetadata: (params: DeleteMetadataParams) =>
+        ipcRenderer.invoke('metadata:delete', params),
 
     // App
     openExternal: (url: string) => ipcRenderer.invoke('app:openExternal', url)
@@ -30,3 +43,4 @@ const api: ExtendedElectronAPI = {
 
 // Expose the API to the renderer process
 contextBridge.exposeInMainWorld('api', api)
+
