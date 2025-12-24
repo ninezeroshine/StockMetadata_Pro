@@ -35,7 +35,7 @@ function createWindow(): void {
         autoHideMenuBar: true,
         title: 'StockMetadata Pro',
         webPreferences: {
-            preload: join(__dirname, '../preload/index.js'),
+            preload: join(__dirname, '../preload/index.mjs'),
             sandbox: false, // Required for File.path in drag-and-drop
             contextIsolation: true,
             nodeIntegration: false,

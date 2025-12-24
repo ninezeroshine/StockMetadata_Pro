@@ -59,12 +59,14 @@ Generate optimized titles, descriptions, and keywords for your stock photography
 git clone https://github.com/ninezeroshine/StockMetadata_Pro.git
 cd StockMetadata_Pro
 
-# Install dependencies
+# Install dependencies (uses .npmrc for automatic conflict resolution)
 npm install
 
 # Run in development mode
 npm run dev
 ```
+
+> **Note:** The project includes a `.npmrc` file that automatically handles dependency conflicts. If you still encounter issues, see [Troubleshooting](#-troubleshooting) below.
 
 ### Production Build
 
@@ -137,6 +139,25 @@ Settings are stored using `electron-store` with encrypted API key storage.
 | Model | AI model ID | google/gemini-2.0-flash-001 |
 | Language | Metadata language | English |
 | Backup | Create backup before writing | true |
+
+## 🔧 Troubleshooting
+
+### White screen on startup
+If the app shows a white screen with `ERR_CONNECTION_REFUSED` errors:
+1. Stop the dev server (Ctrl+C)
+2. Delete the `out/` folder: `rm -rf out/` (or `rmdir /s out` on Windows)
+3. Restart: `npm run dev`
+
+### Dependency installation errors
+If `npm install` fails with `ERESOLVE` errors:
+```bash
+npm install --legacy-peer-deps
+```
+
+### Preload script not found
+If you see "Unable to load preload script" error:
+1. Make sure you have `"type": "module"` in `package.json`
+2. The preload path in `src/main/index.ts` should be `index.mjs` (not `.js`)
 
 ## 📝 License
 
